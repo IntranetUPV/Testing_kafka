@@ -1,0 +1,51 @@
+# Node modules
+**/node_modules/
+**/package-lock.json
+
+# Build outputs
+dist/
+build/
+*.local
+
+# Environment files
+.env
+.env.*
+*.pem
+*.key
+credentials.json
+
+# Python
+**/__pycache__/
+**/*.pyc
+venv/
+env/
+*.pyc
+
+# Spark checkpoints
+spark/checkpoints/
+spark-warehouse/
+metastore_db/
+derby.log
+spark-events/
+
+# Kafka data
+/kafka-logs/
+zookeeper/
+logs/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Data files
+*.db
+*.sqlite
+data/
+tmp/
