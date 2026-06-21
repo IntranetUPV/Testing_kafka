@@ -49,3 +49,5 @@ logs/
 *.sqlite
 data/
 tmp/
+
+run-spark-consumer.bat
