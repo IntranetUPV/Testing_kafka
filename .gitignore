@@ -51,3 +51,4 @@ data/
 tmp/
 
 run-spark-consumer.bat
+docker-commands.txt

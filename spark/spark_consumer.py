@@ -7,10 +7,10 @@ from pyspark.sql.types import StructType, StringType, LongType
 
 spark = SparkSession.builder \
     .appName("KafkaIntranetPortal") \
-    .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0") \
+    .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.13:4.1.2") \
     .getOrCreate()
 
-spark.sparkContext.setLogLevel("WARN")
+spark.sparkContext.setLogLevel("OFF")
 
 schema = StructType() \
     .add("event", StringType()) \

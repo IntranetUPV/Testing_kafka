@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo, createElement as h } from 'react'
 import { io } from 'socket.io-client';
 import Dashboard from './Dashboard.js';
 
-const API_BASE = 'http://localhost:4000';
+const API_BASE = 'http://localhost:9092';
 
 export default function App() {
   const [tab, setTab] = useState('dashboard');
