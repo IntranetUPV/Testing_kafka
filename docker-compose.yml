@@ -1,99 +1,87 @@
-
-# ==== This is for Multiple-Node Deployment ====        
 services:
-  controller-1:
+  kafka:
     image: apache/kafka:latest
-    container_name: controller-1
+    container_name: kafka
+    ports:
+      - "9092:9092"
     environment:
       KAFKA_NODE_ID: 1
-      KAFKA_PROCESS_ROLES: controller
-      KAFKA_LISTENERS: CONTROLLER://:9093
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: INTERNAL://:29092,PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,PLAINTEXT://localhost:9092
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@controller-1:9093,2@controller-2:9093,3@controller-3:9093
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,INTERNAL:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
 
-  controller-2:
-    image: apache/kafka:latest
-    container_name: controller-2
-    environment:
-      KAFKA_NODE_ID: 2
-      KAFKA_PROCESS_ROLES: controller
-      KAFKA_LISTENERS: CONTROLLER://:9093
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@controller-1:9093,2@controller-2:9093,3@controller-3:9093
-      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-
-  controller-3:
-    image: apache/kafka:latest
-    container_name: controller-3
-    environment:
-      KAFKA_NODE_ID: 3
-      KAFKA_PROCESS_ROLES: controller
-      KAFKA_LISTENERS: CONTROLLER://:9093
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@controller-1:9093,2@controller-2:9093,3@controller-3:9093
-      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-
-  broker-1:
-    image: apache/kafka:latest
-    container_name: broker-1
-    ports:
-      - 29092:9092
-    environment:
-      KAFKA_NODE_ID: 4
-      KAFKA_PROCESS_ROLES: broker
-      KAFKA_LISTENERS: 'PLAINTEXT://:19092,PLAINTEXT_HOST://:9092'
-      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://broker-1:19092,PLAINTEXT_HOST://localhost:9092'
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@controller-1:9093,2@controller-2:9093,3@controller-3:9093
-      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+  main-server:
+    build:
+      context: ./server
+    container_name: main-server
     depends_on:
-      - controller-1
-      - controller-2
-      - controller-3
-
-  broker-2:
-    image: apache/kafka:latest
-    container_name: broker-2
-    ports:
-      - 39092:9092
+      - kafka
     environment:
-      KAFKA_NODE_ID: 5
-      KAFKA_PROCESS_ROLES: broker
-      KAFKA_LISTENERS: 'PLAINTEXT://:19092,PLAINTEXT_HOST://:9092'
-      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://broker-2:19092,PLAINTEXT_HOST://localhost:9092'
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@controller-1:9093,2@controller-2:9093,3@controller-3:9093
-      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-    depends_on:
-      - controller-1
-      - controller-2
-      - controller-3
-
-  broker-3:
-    image: apache/kafka:latest
-    container_name: broker-3
+      PORT: 4000
+      KAFKA_BROKERS: kafka:29092
     ports:
-      - 49092:9092
-    environment:
-      KAFKA_NODE_ID: 6
-      KAFKA_PROCESS_ROLES: broker
-      KAFKA_LISTENERS: 'PLAINTEXT://:19092,PLAINTEXT_HOST://:9092'
-      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://broker-3:19092,PLAINTEXT_HOST://localhost:9092'
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@controller-1:9093,2@controller-2:9093,3@controller-3:9093
-      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      - "44000:4000"
+
+  main-client:
+    build:
+      context: ./client
+    container_name: main-client
     depends_on:
-      - controller-1
-      - controller-2
-      - controller-3
+      - main-server
+    ports:
+      - "45173:5173"
+    command: sh -c "npm run dev -- --host 0.0.0.0 --port 5173"
+
+  crs-server:
+    build:
+      context: ./systems/crs-system/server
+    container_name: crs-server
+    depends_on:
+      - kafka
+    environment:
+      PORT: 4002
+      KAFKA_BROKERS: kafka:29092
+    ports:
+      - "44002:4002"
+
+  crs-client:
+    build:
+      context: ./systems/crs-system/client
+    container_name: crs-client
+    depends_on:
+      - crs-server
+    ports:
+      - "45174:5174"
+    command: sh -c "npm run dev -- --host 0.0.0.0 --port 5174"
+
+  tlrc-server:
+    build:
+      context: ./systems/tlrc-login-system/server
+    container_name: tlrc-server
+    depends_on:
+      - kafka
+    environment:
+      PORT: 4001
+      KAFKA_BROKERS: kafka:29092
+    ports:
+      - "44001:4001"
+
+  tlrc-client:
+    build:
+      context: ./systems/tlrc-login-system/client
+    container_name: tlrc-client
+    depends_on:
+      - tlrc-server
+    ports:
+      - "45175:5175"
+    command: sh -c "npm run dev -- --host 0.0.0.0 --port 5175"
 

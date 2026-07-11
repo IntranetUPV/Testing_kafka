@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo, createElement as h } from 'react'
 import { io } from 'socket.io-client';
 import Dashboard from './Dashboard.js';
 
-const API_BASE = 'http://localhost:9092';
+const API_BASE = 'http://localhost:44000';
 
 export default function App() {
   const [tab, setTab] = useState('dashboard');
@@ -14,7 +14,12 @@ export default function App() {
   const socketRef = useRef(null);
 
   useEffect(() => {
-    const socket = io(API_BASE);
+    const socket = io(API_BASE, {
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+    });
     socketRef.current = socket;
 
     socket.on('connect', () => setStatus('connected'));

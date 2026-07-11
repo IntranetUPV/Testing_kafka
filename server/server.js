@@ -5,14 +5,16 @@ const { Server } = require('socket.io');
 const { startKafka, getRecentMessages } = require('./models/KafkaModel');
 const eventRoutes = require('./routes/eventRoutes');
 
+const allowedOrigins = ['http://localhost:45173', 'http://localhost:45174', 'http://localhost:45175', 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://127.0.0.1:45173', 'http://127.0.0.1:45174', 'http://127.0.0.1:45175', 'http://127.0.0.1:5173', 'http://127.0.0.1:5174', 'http://127.0.0.1:5175'];
+
 const app = express();
-app.use(cors());
+app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(express.json());
 app.use('/api', eventRoutes);
 
 const server = http.createServer(app);
 const io = new Server(server, {
-  cors: { origin: '*' },
+  cors: { origin: allowedOrigins, methods: ['GET', 'POST'], credentials: true },
 });
 
 io.on('connection', (socket) => {

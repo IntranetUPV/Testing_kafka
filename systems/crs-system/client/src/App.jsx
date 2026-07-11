@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-const API_BASE = 'http://localhost:9092/api';
+const API_BASE = 'http://localhost:44002/api';
 
 export default function App() {
   const [studentId, setStudentId] = useState('');

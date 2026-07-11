@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
 
-const API_BASE = 'http://localhost:9092/api';
+const API_BASE = 'http://localhost:44001/api';
 
 export default function App() {
   const [logins, setLogins] = useState([]);
@@ -9,7 +9,12 @@ export default function App() {
   const [status, setStatus] = useState('');
 
   useEffect(() => {
-    const socket = io('http://localhost:9092');
+    const socket = io('http://localhost:44001', {
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+    });
     socket.on('initial-messages', (incoming) => setLogins(incoming || []));
     return () => socket.disconnect();
   }, []);

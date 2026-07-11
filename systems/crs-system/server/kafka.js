@@ -3,7 +3,7 @@ import { Kafka } from 'kafkajs';
 // Setup Kafka Server
 const CLIENT_ID = 'crs-system';
 const INPUT_TOPIC = 'test-topic';
-const BROKERS = ['localhost:9092']
+const BROKERS = [process.env.KAFKA_BROKERS || 'localhost:9092']
 const kafka = new Kafka({
     clientId: CLIENT_ID,
     brokers: BROKERS
