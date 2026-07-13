@@ -1,12 +1,14 @@
 const { sendEvent, getRecentMessages } = require('../models/KafkaModel');
 
+const SYSTEM_NAME = process.env.SYSTEM_NAME || 'main';
+
 async function postEvent(req, res) {
   try {
     const { event, studentId } = req.body;
     if (!event || !studentId)
       return res.status(400).json({ error: 'event and studentId are required' });
 
-    const payload = { event, studentId, timestamp: Date.now() };
+    const payload = { event, studentId, timestamp: Date.now(), system: SYSTEM_NAME };
     await sendEvent(payload);
     res.json({ status: 'sent', payload });
   } catch (err) {

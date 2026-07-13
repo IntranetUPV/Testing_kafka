@@ -44,44 +44,53 @@ export default function App() {
       setStatus('Network error while sending login event.');
     }
   }
-  return (
-    <div style={{ maxWidth: 640, margin: '0 auto', padding: 24, fontFamily: 'system-ui, sans-serif' }}>
-      <h1>TLRC Student Login</h1>
-      <p>The TLRC needs you to login your Student Number for important purposes.</p>
 
-      <div style={{ marginBottom: 24, padding: 16, border: '1px solid #ccc', borderRadius: 8 }}>
+  return (
+    <div className="app-shell">
+      <header className="app-header">
+        <span className="eyebrow">UP Visayas · Teaching and Learning Resource Center</span>
+        <h1>TLRC Student Login</h1>
+      </header>
+
+      <p className="helper-text" style={{ marginBottom: 24 }}>
+        The TLRC needs you to login your Student Number for important purposes.
+      </p>
+
+      <div className="card">
         <h2>Student Login</h2>
         <input
-          type='text'
+          type="text"
           value={id}
           onChange={(e) => setID(e.target.value)}
-          placeholder='Enter student ID'
-          style={{ width: '100%', padding: 8, marginBottom: 8, boxSizing: 'border-box'}}
+          placeholder="Enter student ID"
         />
-        <button onClick={sendEvent} style={{ padding: '10px 16px' }}>
-          Enter
-        </button>
+        <button onClick={sendEvent}>Enter</button>
       </div>
 
-      {status && <div style={{ marginBottom: 16, color: '#333' }}><strong>Status:</strong> {status}</div>}
+      {status && <div className="status-message">{status}</div>}
 
-      <section style={{ padding: 16, border: '1px solid #ccc', borderRadius: 8 }}>
+      <section className="card">
         <h2>Recent Logins</h2>
         {Array.isArray(logins) && logins.length > 0 ? (
-          <div>
+          <ul className="subject-list">
             {logins.map((login, index) => {
-              const time = login && login.timestamp ? new Date(login.timestamp).toLocaleString() : 'unknown time';
+              const time = login && login.timestamp
+                ? new Date(login.timestamp).toLocaleString()
+                : 'unknown time';
               return (
-                <p key={index} style={{ marginBottom: 12 }}>
-                  <strong>{login?.studentId || 'Unknown student'}</strong> logged in at {time}
-                </p>
+                <li key={index} className="subject-item">
+                  <div>
+                    <span className="subject-name">{login?.studentId || 'Unknown student'}</span>
+                    <span className="subject-meta">logged in at {time}</span>
+                  </div>
+                </li>
               );
             })}
-          </div>
+          </ul>
         ) : (
-          <p>There are no students who have logged on. Login now!</p>
+          <p className="helper-text">There are no students who have logged on. Login now!</p>
         )}
       </section>
     </div>
-  )
+  );
 }

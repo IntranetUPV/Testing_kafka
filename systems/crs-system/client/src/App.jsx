@@ -122,94 +122,86 @@ export default function App() {
   }
 
   return (
-    <div style={{ maxWidth: 640, margin: '0 auto', padding: 24, fontFamily: 'system-ui, sans-serif' }}>
-      <h1>CRS Student Dashboard</h1>
+    <div className="app-shell">
+      <header className="app-header">
+        <span className="eyebrow">UP Visayas ·  Computerized Registration and Student Information System</span>
+        <h1>Student Dashboard</h1>
+      </header>
 
-      <div style={{ marginBottom: 24, padding: 16, border: '1px solid #ccc', borderRadius: 8 }}>
+      <div className="card">
         {(!loggedInId) ? (
-
           <div>
             <h2>Login</h2>
             <input
-            value={studentId}
-            onChange={(e) => setStudentId(e.target.value)}
-            placeholder="Enter student ID"
-            style={{ width: '100%', padding: 8, marginBottom: 8, boxSizing: 'border-box' }}
+              value={studentId}
+              onChange={(e) => setStudentId(e.target.value)}
+              placeholder="Enter student ID"
             />
-            <button onClick={login} style={{ padding: '10px 16px' }}>
-              Login
-            </button>
+            <button onClick={login}>Login</button>
           </div>
-          ) : (
-            <div>
-              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                <h2>Hello {loggedInId}!</h2>
-                <button onClick={logout} style={{ padding: '10px 16px', height: '40px'}}>
-                  Logout
-                </button>
-              </div>
-              <section style={{ marginBottom: 24 }}>
-                <h3>Current Subjects</h3>
-                {subjects.length > 0 ? (
-                  <ul style={{ paddingLeft: 20 }}>
-                    {subjects.map((subject) => (
-                      <li key={subject.id} style={{ marginBottom: 12 }}>
-                        <strong>{subject.name}</strong>
-                        <span style={{ marginLeft: 12, color: '#555' }}>
+        ) : (
+          <div>
+            <div className="card-row">
+              <h2 style={{ marginBottom: 0 }}>Hello, {loggedInId}!</h2>
+              <button className="btn-secondary" onClick={logout}>
+                Logout
+              </button>
+            </div>
+
+            <section style={{ marginTop: 20 }}>
+              <h3>Current Subjects</h3>
+              {subjects.length > 0 ? (
+                <ul className="subject-list">
+                  {subjects.map((subject) => (
+                    <li key={subject.id} className="subject-item">
+                      <div>
+                        <span className="subject-name">{subject.name}</span>
+                        <span className="subject-meta">
                           Units: {subject.unit} | Course ID: {subject.courseId}
                         </span>
-                        <button
-                          onClick={() => removeSubject(subject.id)}
-                          style={{ marginLeft: 12, padding: '4px 8px' }}
-                        >
-                          Remove
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p>No subjects yet. Add one below.</p>
-                )}
-              </section>
-
-
-            </div>
-          )
-        }        
+                      </div>
+                      <button
+                        className="btn-remove"
+                        onClick={() => removeSubject(subject.id)}
+                      >
+                        Remove
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="helper-text">No subjects yet. Add one below.</p>
+              )}
+            </section>
+          </div>
+        )}
       </div>
 
       {loggedInId ? (
-        <>
-          <section style={{ padding: 16, border: '1px solid #ccc', borderRadius: 8 }}>
-            <h2>Add a Subject</h2>
-            <div style={{ display: 'grid', gap: 10 }}>
-              <input
-                value={subjectName}
-                onChange={(e) => setSubjectName(e.target.value)}
-                placeholder="Enter subject name"
-                style={{ padding: 8, width: '100%', boxSizing: 'border-box'}}
-              />
-              <input
-                value={subjectUnit}
-                onChange={(e) => setSubjectUnit(e.target.value)}
-                placeholder="Enter units"
-                style={{ padding: 8, width: '100%', boxSizing: 'border-box'}}
-              />
-              <input
-                value={courseId}
-                onChange={(e) => setCourseId(e.target.value)}
-                placeholder="Enter course ID"
-                style={{ padding: 8, width: '100%', boxSizing: 'border-box'}}
-              />
-              <button onClick={addSubject} style={{ padding: '10px 16px', width: 'fit-content' }}>
-                Add Subject
-              </button>
-            </div>
-          </section>
-        </>
+        <section className="card">
+          <h2>Add a Subject</h2>
+          <input
+            value={subjectName}
+            onChange={(e) => setSubjectName(e.target.value)}
+            placeholder="Enter subject name"
+          />
+          <input
+            value={subjectUnit}
+            onChange={(e) => setSubjectUnit(e.target.value)}
+            placeholder="Enter units"
+          />
+          <input
+            value={courseId}
+            onChange={(e) => setCourseId(e.target.value)}
+            placeholder="Enter course ID"
+          />
+          <button onClick={addSubject}>Add Subject</button>
+        </section>
       ) : (
-        <p>Please log in with a student ID to see and manage subjects.</p>
+        <p className="helper-text">Please log in with a student ID to see and manage subjects.</p>
       )}
+
+      {status && <div className="status-message">{status}</div>}
     </div>
   );
 }

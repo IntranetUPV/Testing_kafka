@@ -25,6 +25,10 @@ def build_spark_session():
         SparkSession.builder.appName("KafkaIntranetPortal")
         .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.13:4.1.2")
         .config("spark.sql.shuffle.partitions", "1")
+        .config("spark.driver.host", "127.0.0.1")
+        .config("spark.driver.bindAddress", "127.0.0.1")
+        .config("spark.executor.heartbeatInterval", "20s")
+        .config("spark.network.timeout", "120s")
         .getOrCreate()
     )
 
@@ -44,6 +48,7 @@ def main():
         .add("event", StringType())
         .add("studentId", StringType())
         .add("timestamp", LongType())
+        .add("system", StringType())
     )
 
     raw_df = (
@@ -88,7 +93,7 @@ def main():
         to_json(struct([col(c) for c in enriched_df.columns])).alias("value")
     )
 
-    enriched_output.writeStream.format("kafka") \
+    query1 = enriched_output.writeStream.format("kafka") \
         .option("kafka.bootstrap.servers", BOOTSTRAP_SERVERS) \
         .option("topic", PROCESSED_TOPIC) \
         .option("checkpointLocation", os.path.join(CHECKPOINT_BASE, "processed-events")) \
@@ -99,16 +104,22 @@ def main():
         to_json(struct([col(c) for c in windowed_df.columns])).alias("value")
     )
 
-    windowed_output.writeStream.format("kafka") \
+    query2 = windowed_output.writeStream.format("kafka") \
         .option("kafka.bootstrap.servers", BOOTSTRAP_SERVERS) \
         .option("topic", AGGREGATED_TOPIC) \
         .option("checkpointLocation", os.path.join(CHECKPOINT_BASE, "aggregated-events")) \
         .outputMode("update") \
         .start()
 
-    windowed_df.writeStream.outputMode("update").format("console").option("truncate", False).start()
+    query3 = windowed_df.writeStream.outputMode("update").format("console").option("truncate", False).start()
 
-    spark.streams.awaitAnyTermination()
+    try:
+        spark.streams.awaitAnyTermination()
+    except KeyboardInterrupt:
+        print("Stopping streams gracefully...")
+        for q in [query1, query2, query3]:
+            q.stop()
+        spark.stop()
 
 
 if __name__ == "__main__":

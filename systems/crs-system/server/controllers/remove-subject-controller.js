@@ -1,6 +1,8 @@
 import { removeSubject, getStudentSubjects } from './../models/login-model.js';
 import { produceKafkaEvent } from './../kafka.js';
 
+const SYSTEM_NAME = process.env.SYSTEM_NAME || 'crs';
+
 async function removeSubjectController(req, res) {
   try {
     const { studentId, subjectId } = req.params;
@@ -19,6 +21,7 @@ async function removeSubjectController(req, res) {
       studentId,
       subjectId,
       timestamp: Date.now(),
+      system: SYSTEM_NAME,
     });
 
     const subjects = getStudentSubjects(studentId);

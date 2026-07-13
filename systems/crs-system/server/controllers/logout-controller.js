@@ -1,6 +1,8 @@
 import { produceKafkaEvent } from './../kafka.js';
 import { getLoginAccount, setLoginAccount } from './../models/login-model.js';
 
+const SYSTEM_NAME = process.env.SYSTEM_NAME || 'crs';
+
 async function logoutController(req, res) {
   try {
     const studentId = getLoginAccount();
@@ -9,6 +11,7 @@ async function logoutController(req, res) {
       event: 'logged_out',
       studentId,
       timestamp: Date.now(),
+      system: SYSTEM_NAME,
     });
     res.status(200).json({ status: `logged out ${studentId}` });
   } catch (error) {

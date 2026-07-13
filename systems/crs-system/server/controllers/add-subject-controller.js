@@ -1,6 +1,8 @@
 import { addSubject } from './../models/login-model.js';
 import { produceKafkaEvent } from './../kafka.js';
 
+const SYSTEM_NAME = process.env.SYSTEM_NAME || 'crs';
+
 async function addSubjectController(req, res) {
   try {
     const { studentId } = req.params;
@@ -23,6 +25,7 @@ async function addSubjectController(req, res) {
       studentId,
       subject,
       timestamp: Date.now(),
+      system: SYSTEM_NAME,
     });
     res.status(201).json({ subject, subjects });
   } catch (error) {

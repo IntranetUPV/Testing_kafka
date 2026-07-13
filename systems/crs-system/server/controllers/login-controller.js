@@ -1,6 +1,8 @@
 import { produceKafkaEvent } from './../kafka.js';
 import { setLoginAccount, getStudentSubjects } from './../models/login-model.js';
 
+const SYSTEM_NAME = process.env.SYSTEM_NAME || 'crs';
+
 async function loginController(req, res) {
   try {
     const { event, studentId } = req.body;
@@ -8,7 +10,7 @@ async function loginController(req, res) {
       return res.status(400).json({ error: 'event and studentId are required.' });
     }
 
-    const eventData = { event, studentId, timestamp: Date.now() };
+    const eventData = { event, studentId, timestamp: Date.now(), system: SYSTEM_NAME };
     await produceKafkaEvent(eventData);
     setLoginAccount(studentId);
     const subjects = getStudentSubjects(studentId);

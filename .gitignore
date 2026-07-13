@@ -1,6 +1,5 @@
 # Node modules
 **/node_modules/
-**/package-lock.json
 
 # Build outputs
 dist/
@@ -17,9 +16,11 @@ credentials.json
 # Python
 **/__pycache__/
 **/*.pyc
+.venv/
 venv/
 env/
-*.pyc
+*.egg-info/
+.pytest_cache/
 
 # Spark checkpoints
 spark/checkpoints/
@@ -31,7 +32,7 @@ spark-events/
 # Kafka data
 /kafka-logs/
 zookeeper/
-logs/
+zookeeper-data/
 
 # IDE
 .idea/
@@ -39,6 +40,7 @@ logs/
 *.iml
 .DS_Store
 Thumbs.db
+desktop.ini
 
 # Logs
 *.log
@@ -49,6 +51,7 @@ logs/
 *.sqlite
 data/
 tmp/
+*.bak
 
 run-spark-consumer.bat
 docker-commands.txt

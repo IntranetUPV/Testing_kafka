@@ -1,15 +1,27 @@
 import { useEffect, useRef, useMemo, createElement as h } from 'react';
 
+const MAROON = '#7b1113';
+const GREEN = '#014421';
+const GOLD = '#ffc72c';
+const MUTED = '#6b6560';
+const HAIRLINE = '#ddd5c7';
+
+// Cycled across systems in the doughnut chart / legend
+const SYSTEM_PALETTE = ['#7b1113', '#014421', '#ffc72c', '#94571f', '#3a6b8a', '#6b6560'];
+
 export default function Dashboard({ events }) {
   const lineCanvasRef = useRef(null);
   const lineChartRef = useRef(null);
   const barCanvasRef = useRef(null);
   const barChartRef = useRef(null);
+  const systemCanvasRef = useRef(null);
+  const systemChartRef = useRef(null);
 
   const stats = useMemo(() => {
     const byType = {};
     const byStudent = {};
     const byMinute = {};
+    const bySystem = {};
 
     events.forEach((e) => {
       const type = e.event || e.source || 'unknown';
@@ -24,6 +36,9 @@ export default function Dashboard({ events }) {
         const key = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
         byMinute[key] = (byMinute[key] || 0) + 1;
       }
+
+      const system = e.system || 'unknown';
+      bySystem[system] = (bySystem[system] || 0) + 1;
     });
 
     const topStudents = Object.entries(byStudent)
@@ -32,7 +47,9 @@ export default function Dashboard({ events }) {
 
     const timeline = Object.entries(byMinute).sort((a, b) => a[0].localeCompare(b[0]));
 
-    return { byType, topStudents, timeline, total: events.length };
+    const systems = Object.entries(bySystem).sort((a, b) => b[1] - a[1]);
+
+    return { byType, topStudents, timeline, systems, total: events.length };
   }, [events]);
 
   useEffect(() => {
@@ -47,11 +64,12 @@ export default function Dashboard({ events }) {
           {
             label: 'Events per minute',
             data: stats.timeline.map((entry) => entry[1]),
-            borderColor: '#378ADD',
-            backgroundColor: 'rgba(55, 138, 221, 0.15)',
+            borderColor: MAROON,
+            backgroundColor: 'rgba(123, 17, 19, 0.12)',
             fill: true,
             tension: 0.3,
             pointRadius: 3,
+            pointBackgroundColor: MAROON,
           },
         ],
       },
@@ -60,8 +78,8 @@ export default function Dashboard({ events }) {
         maintainAspectRatio: false,
         plugins: { legend: { display: false } },
         scales: {
-          y: { beginAtZero: true, ticks: { color: '#94a3b8', precision: 0 }, grid: { color: '#1e293b' } },
-          x: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } },
+          y: { beginAtZero: true, ticks: { color: MUTED, precision: 0 }, grid: { color: HAIRLINE } },
+          x: { ticks: { color: MUTED }, grid: { color: HAIRLINE } },
         },
       },
     });
@@ -81,7 +99,7 @@ export default function Dashboard({ events }) {
           {
             label: 'Count',
             data: entries.map((entry) => entry[1]),
-            backgroundColor: '#1D9E75',
+            backgroundColor: GREEN,
             borderRadius: 4,
           },
         ],
@@ -91,50 +109,117 @@ export default function Dashboard({ events }) {
         maintainAspectRatio: false,
         plugins: { legend: { display: false } },
         scales: {
-          y: { beginAtZero: true, ticks: { color: '#94a3b8', precision: 0 }, grid: { color: '#1e293b' } },
-          x: { ticks: { color: '#94a3b8' }, grid: { display: false } },
+          y: { beginAtZero: true, ticks: { color: MUTED, precision: 0 }, grid: { color: HAIRLINE } },
+          x: { ticks: { color: MUTED }, grid: { display: false } },
         },
       },
     });
   }, [stats.byType]);
 
+  useEffect(() => {
+    if (!window.Chart || !systemCanvasRef.current) return;
+    if (systemChartRef.current) systemChartRef.current.destroy();
+
+    systemChartRef.current = new window.Chart(systemCanvasRef.current, {
+      type: 'doughnut',
+      data: {
+        labels: stats.systems.map((entry) => entry[0]),
+        datasets: [
+          {
+            data: stats.systems.map((entry) => entry[1]),
+            backgroundColor: stats.systems.map((_, i) => SYSTEM_PALETTE[i % SYSTEM_PALETTE.length]),
+            borderColor: '#ffffff',
+            borderWidth: 2,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '62%',
+        plugins: { legend: { display: false } },
+      },
+    });
+  }, [stats.systems]);
+
   const maxStudentCount = stats.topStudents.length > 0 ? stats.topStudents[0][1] : 1;
 
   return h('div', null, [
-    h('div', { key: 'metrics', style: styles.metricGrid }, [
-      h('div', { key: 'm1', style: styles.metricCard }, [
-        h('p', { key: 'l', style: styles.metricLabel }, 'Total events'),
-        h('p', { key: 'v', style: styles.metricValue }, stats.total),
+    h('div', { key: 'metrics', className: 'metric-grid' }, [
+      h('div', { key: 'm1', className: 'metric-card' }, [
+        h('p', { key: 'l', className: 'metric-label' }, 'Total events'),
+        h('p', { key: 'v', className: 'metric-value' }, stats.total),
       ]),
-      h('div', { key: 'm2', style: styles.metricCard }, [
-        h('p', { key: 'l', style: styles.metricLabel }, 'Event types'),
-        h('p', { key: 'v', style: styles.metricValue }, Object.keys(stats.byType).length),
+      h('div', { key: 'm2', className: 'metric-card' }, [
+        h('p', { key: 'l', className: 'metric-label' }, 'Event types'),
+        h('p', { key: 'v', className: 'metric-value' }, Object.keys(stats.byType).length),
       ]),
-      h('div', { key: 'm3', style: styles.metricCard }, [
-        h('p', { key: 'l', style: styles.metricLabel }, 'Unique students'),
-        h('p', { key: 'v', style: styles.metricValue }, stats.topStudents.length),
+      h('div', { key: 'm3', className: 'metric-card' }, [
+        h('p', { key: 'l', className: 'metric-label' }, 'Unique students'),
+        h('p', { key: 'v', className: 'metric-value' }, stats.topStudents.length),
       ]),
-    ]),
-
-    h('div', { key: 'timeline-section', style: styles.section }, [
-      h('h2', { key: 'title', style: styles.sectionTitle }, 'Events over time'),
-      h('div', { key: 'chartwrap', style: { position: 'relative', height: '220px' } }, [
-        h(
-          'canvas',
-          {
-            key: 'canvas',
-            ref: lineCanvasRef,
-            role: 'img',
-            'aria-label': 'Line chart of events received per minute',
-          },
-          'Events per minute timeline'
-        ),
+      h('div', { key: 'm4', className: 'metric-card' }, [
+        h('p', { key: 'l', className: 'metric-label' }, 'Systems'),
+        h('p', { key: 'v', className: 'metric-value' }, stats.systems.length),
       ]),
     ]),
 
-    h('div', { key: 'twocol', style: styles.twoCol }, [
-      h('div', { key: 'bytype', style: styles.section }, [
-        h('h2', { key: 'title', style: styles.sectionTitle }, 'Events by type'),
+    h('div', { key: 'toprow', className: 'two-col' }, [
+      h('div', { key: 'timeline-section', className: 'section' }, [
+        h('h2', { key: 'title', className: 'section-title' }, 'Events over time'),
+        h('div', { key: 'chartwrap', style: { position: 'relative', height: '240px' } }, [
+          h(
+            'canvas',
+            {
+              key: 'canvas',
+              ref: lineCanvasRef,
+              role: 'img',
+              'aria-label': 'Line chart of events received per minute',
+            },
+            'Events per minute timeline'
+          ),
+        ]),
+      ]),
+
+      h('div', { key: 'system-section', className: 'section' }, [
+        h('h2', { key: 'title', className: 'section-title' }, 'Events by system'),
+        stats.systems.length === 0
+          ? h('p', { key: 'empty', className: 'empty' }, 'No system data yet')
+          : h('div', { key: 'row', className: 'system-row' }, [
+              h('div', { key: 'chartwrap', className: 'system-chart-wrap' }, [
+                h(
+                  'canvas',
+                  {
+                    key: 'canvas',
+                    ref: systemCanvasRef,
+                    role: 'img',
+                    'aria-label': 'Doughnut chart of event counts grouped by originating system',
+                  },
+                  'Event counts by system'
+                ),
+              ]),
+              h(
+                'div',
+                { key: 'legend', className: 'system-legend' },
+                stats.systems.map((entry, i) =>
+                  h('div', { key: entry[0], className: 'system-legend-item' }, [
+                    h('span', {
+                      key: 'dot',
+                      className: 'system-dot',
+                      style: { background: SYSTEM_PALETTE[i % SYSTEM_PALETTE.length] },
+                    }),
+                    h('span', { key: 'name', className: 'system-name' }, entry[0]),
+                    h('span', { key: 'count', className: 'student-count' }, entry[1]),
+                  ])
+                )
+              ),
+            ]),
+      ]),
+    ]),
+
+    h('div', { key: 'twocol', className: 'two-col' }, [
+      h('div', { key: 'bytype', className: 'section' }, [
+        h('h2', { key: 'title', className: 'section-title' }, 'Events by type'),
         h('div', { key: 'chartwrap', style: { position: 'relative', height: '240px' } }, [
           h(
             'canvas',
@@ -149,10 +234,10 @@ export default function Dashboard({ events }) {
         ]),
       ]),
 
-      h('div', { key: 'topstudents', style: styles.section }, [
-        h('h2', { key: 'title', style: styles.sectionTitle }, 'Most active students'),
+      h('div', { key: 'topstudents', className: 'section' }, [
+        h('h2', { key: 'title', className: 'section-title' }, 'Most active students'),
         stats.topStudents.length === 0
-          ? h('p', { key: 'empty', style: styles.empty }, 'No student data yet')
+          ? h('p', { key: 'empty', className: 'empty' }, 'No student data yet')
           : null,
         h(
           'div',
@@ -161,14 +246,15 @@ export default function Dashboard({ events }) {
             const id = entry[0];
             const count = entry[1];
             return h('div', { key: id }, [
-              h('div', { key: 'row', style: styles.studentRow }, [
+              h('div', { key: 'row', className: 'student-row' }, [
                 h('span', { key: 'id' }, id),
-                h('span', { key: 'count', style: { color: '#94a3b8' } }, count),
+                h('span', { key: 'count', className: 'student-count' }, count),
               ]),
-              h('div', { key: 'track', style: styles.barTrack }, [
+              h('div', { key: 'track', className: 'bar-track' }, [
                 h('div', {
                   key: 'fill',
-                  style: { ...styles.barFill, width: (count / maxStudentCount) * 100 + '%' },
+                  className: 'bar-fill',
+                  style: { width: (count / maxStudentCount) * 100 + '%' },
                 }),
               ]),
             ]);
@@ -178,46 +264,3 @@ export default function Dashboard({ events }) {
     ]),
   ]);
 }
-
-const styles = {
-  metricGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(3, 1fr)',
-    gap: '12px',
-    marginBottom: '24px',
-  },
-  metricCard: {
-    background: '#1e293b',
-    borderRadius: '8px',
-    padding: '16px',
-  },
-  metricLabel: { fontSize: '12px', color: '#94a3b8', margin: 0, marginBottom: '6px' },
-  metricValue: { fontSize: '24px', fontWeight: 500, margin: 0 },
-  section: {
-    background: '#1e293b',
-    border: '1px solid #334155',
-    borderRadius: '8px',
-    padding: '16px',
-    marginBottom: '20px',
-  },
-  sectionTitle: { fontSize: '14px', color: '#cbd5e1', marginTop: 0, marginBottom: '12px' },
-  twoCol: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' },
-  empty: { color: '#64748b', fontSize: '13px' },
-  studentRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    fontSize: '13px',
-    marginBottom: '4px',
-  },
-  barTrack: {
-    height: '6px',
-    background: '#0f172a',
-    borderRadius: '999px',
-    overflow: 'hidden',
-  },
-  barFill: {
-    height: '100%',
-    background: '#378ADD',
-    borderRadius: '999px',
-  },
-};

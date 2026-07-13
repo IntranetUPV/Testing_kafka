@@ -22,20 +22,47 @@ $Command
     Start-Process powershell -ArgumentList @('-NoExit', '-Command', $fullCommand) -WorkingDirectory $WorkingDirectory -RedirectStandardOutput $logFile -RedirectStandardError $errorLogFile
 }
 
+function Wait-ForKafka {
+    param(
+        [int]$MaxAttempts = 30,
+        [int]$DelaySeconds = 2
+    )
+
+    Write-Host 'Waiting for Kafka broker to become ready...'
+    for ($i = 1; $i -le $MaxAttempts; $i++) {
+        docker exec kafka /opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 *> $null
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host 'Kafka is ready.'
+            return
+        }
+        Start-Sleep -Seconds $DelaySeconds
+    }
+    throw 'Kafka did not become ready in time.'
+}
+
 Set-Location $root
 
 Write-Host 'Starting Kafka and the containerized app services...'
-docker compose up -d --build
+docker compose up -d --build kafka
+
+Wait-ForKafka
 
 Write-Host 'Creating topic test-topic if needed...'
 docker exec --workdir /opt/kafka/bin/ kafka ./kafka-topics.sh --bootstrap-server kafka:9092 --create --topic test-topic --if-not-exists
 
 Write-Host 'Creating topic processed-events if needed...'
+docker exec --workdir /opt/kafka/bin/ kafka ./kafka-topics.sh --bootstrap-server kafka:9092 --create --topic processed-events --if-not-exists
+
+Write-Host 'Creating topic aggregated-events if needed...'
 docker exec --workdir /opt/kafka/bin/ kafka ./kafka-topics.sh --bootstrap-server kafka:9092 --create --topic aggregated-events --if-not-exists
 
 Write-Host ''
+Write-Host 'Starting remaining app services...'
+docker compose up -d --build
+
+Write-Host ''
 Write-Host 'Starting Spark consumer locally...'
-Start-BackgroundProcess -Name 'Spark consumer' -WorkingDirectory $root -Command 'if (-not (Test-Path .venv)) { python -m venv .venv }; .\.venv\Scripts\Activate.ps1; pip install pyspark; python .\spark\spark_consumer.py'
+Start-BackgroundProcess -Name 'Spark consumer' -WorkingDirectory $root -Command 'if (-not (Test-Path .venv)) { python -m venv .venv }; .\.venv\Scripts\Activate.ps1; pip install pyspark==4.1.2; python .\spark\spark_consumer.py'
 
 Write-Host ''
 Write-Host 'Kafka and the containerized app services have been launched.'

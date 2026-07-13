@@ -80,14 +80,14 @@ export default function App() {
   }, [processedMessages]);
 
   const pipelineView = h('div', { key: 'pipeline' }, [
-    h('div', { key: 'form', style: styles.formRow }, [
+    h('div', { key: 'form', className: 'form-row' }, [
       h(
         'select',
         {
           key: 'select',
           value: event,
           onChange: (e) => setEvent(e.target.value),
-          style: styles.input,
+          className: 'field',
         },
         [
           h('option', { key: 'a', value: 'student_login' }, 'student_login'),
@@ -100,37 +100,34 @@ export default function App() {
         key: 'input',
         value: studentId,
         onChange: (e) => setStudentId(e.target.value),
-        style: styles.input,
+        className: 'field',
         placeholder: 'Student ID',
       }),
-      h('button', { key: 'btn', onClick: sendEvent, style: styles.button }, 'Send to test-topic'),
+      h('button', { key: 'btn', onClick: sendEvent, className: 'btn' }, 'Send to test-topic'),
     ]),
 
-    h('div', { key: 'columns', style: styles.columns }, [
-      h('div', { key: 'sent', style: styles.column }, [
-        h('h2', { key: 'title', style: styles.colTitle }, '1. Sent (raw to test-topic)'),
+    h('div', { key: 'columns', className: 'columns' }, [
+      h('div', { key: 'sent', className: 'column' }, [
+        h('h2', { key: 'title', className: 'col-title' }, '1. Sent (raw to test-topic)'),
         h(
           'div',
-          { key: 'list', style: styles.list },
+          { key: 'list', className: 'list' },
           sentLog.length === 0
-            ? h('p', { key: 'empty', style: styles.empty }, 'Nothing sent yet')
+            ? h('p', { key: 'empty', className: 'empty' }, 'Nothing sent yet')
             : sentLog.map((s, i) =>
-                h('div', { key: i, style: styles.card }, [
-                  h('div', { key: 'header', style: styles.cardHeader }, [
+                h('div', { key: i, className: 'event-card' }, [
+                  h('div', { key: 'header', className: 'event-header' }, [
                     h('strong', { key: 'name' }, s.event || 'error'),
                     h(
                       'span',
                       {
                         key: 'badge',
-                        style: {
-                          ...styles.badge,
-                          background: isConfirmed(s) ? '#16a34a' : '#92400e',
-                        },
+                        className: 'badge ' + (isConfirmed(s) ? 'confirmed' : 'waiting'),
                       },
                       isConfirmed(s) ? 'Confirmed by Spark' : 'Waiting for Spark...'
                     ),
                   ]),
-                  h('div', { key: 'body', style: styles.cardBody }, [
+                  h('div', { key: 'body', className: 'event-body' }, [
                     'studentId: ' + s.studentId,
                     h('br', { key: 'br1' }),
                     'timestamp: ' + s.timestamp,
@@ -142,54 +139,67 @@ export default function App() {
         ),
       ]),
 
-      h('div', { key: 'received', style: styles.column }, [
-        h('h2', { key: 'title', style: styles.colTitle }, '2. Received (processed-events from Spark)'),
+      h('div', { key: 'received', className: 'column' }, [
+        h('h2', { key: 'title', className: 'col-title' }, '2. Received (processed-events from Spark)'),
         h(
           'div',
-          { key: 'list', style: styles.list },
+          { key: 'list', className: 'list' },
           processedMessages.length === 0
             ? h(
                 'p',
-                { key: 'empty', style: styles.empty },
+                { key: 'empty', className: 'empty' },
                 'No processed messages yet. Make sure Spark is running.'
               )
-            : processedMessages.map((m, i) =>
-                h('div', { key: i, style: styles.card }, [
-                  h('div', { key: 'body', style: styles.cardBody }, [
-                    h('pre', { key: 'pre', style: styles.pre }, prettyPrint(m.value)),
+            : processedMessages.map((m, i) => {
+                const parsed = (() => {
+                  try {
+                    return JSON.parse(m.value);
+                  } catch {
+                    return null;
+                  }
+                })();
+
+                return h('div', { key: i, className: 'event-card' }, [
+                  parsed && parsed.system
+                    ? h('div', { key: 'source', className: 'source-tag' }, parsed.system.toUpperCase())
+                    : null,
+                  h('div', { key: 'body', className: 'event-body' }, [
+                    h('pre', { key: 'pre', className: 'code-block' }, prettyPrint(m.value)),
                     h(
                       'div',
-                      { key: 'meta', style: styles.meta },
+                      { key: 'meta', className: 'event-meta' },
                       'partition ' + m.partition + ' - offset ' + m.offset + ' - received ' + m.receivedAt
                     ),
                   ]),
-                ])
-              )
+                ]);
+              })
         ),
       ]),
     ]),
   ]);
 
-  return h('div', { style: styles.page }, [
-    h('div', { key: 'header', style: styles.headerRow }, [
-      h('h1', { key: 'title', style: styles.title }, 'Intranet portal demo'),
-      h('p', { key: 'status', style: styles.statusLine }, [
+  return h('div', { className: 'container' }, [
+    h('div', { key: 'header' }, [
+      h('header', { key: 'headerinner' }, [
+        h('h1', { key: 'title' }, 'Intranet portal demo'),
+      ]),
+      h('p', { key: 'status', className: 'subtitle' }, [
         'Backend: ',
         h(
           'span',
-          { key: 'val', style: { color: status === 'connected' ? '#4ade80' : '#f87171' } },
+          { key: 'val', className: status === 'connected' ? 'status success' : 'status error', style: { display: 'inline' } },
           status
         ),
       ]),
     ]),
 
-    h('div', { key: 'tabs', style: styles.tabs }, [
+    h('div', { key: 'tabs', className: 'tabs' }, [
       h(
         'button',
         {
           key: 'tab1',
           onClick: () => setTab('dashboard'),
-          style: { ...styles.tabButton, ...(tab === 'dashboard' ? styles.tabButtonActive : {}) },
+          className: 'tab-button' + (tab === 'dashboard' ? ' tab-button-active' : ''),
         },
         'Dashboard'
       ),
@@ -198,7 +208,7 @@ export default function App() {
         {
           key: 'tab2',
           onClick: () => setTab('pipeline'),
-          style: { ...styles.tabButton, ...(tab === 'pipeline' ? styles.tabButtonActive : {}) },
+          className: 'tab-button' + (tab === 'pipeline' ? ' tab-button-active' : ''),
         },
         'Pipeline check'
       ),
@@ -216,83 +226,3 @@ function prettyPrint(jsonStr) {
     return jsonStr;
   }
 }
-
-const styles = {
-  page: {
-    fontFamily: 'system-ui, sans-serif',
-    background: '#0f172a',
-    minHeight: '100vh',
-    color: '#e2e8f0',
-    padding: '24px 32px',
-  },
-  headerRow: { marginBottom: '14px' },
-  title: { fontSize: '22px', marginBottom: '4px' },
-  statusLine: { fontSize: '13px', color: '#94a3b8' },
-  tabs: { display: 'flex', gap: '8px', marginBottom: '24px', borderBottom: '1px solid #334155' },
-  tabButton: {
-    background: 'transparent',
-    border: 'none',
-    color: '#94a3b8',
-    padding: '10px 16px',
-    fontSize: '14px',
-    cursor: 'pointer',
-    borderBottom: '2px solid transparent',
-  },
-  tabButtonActive: {
-    color: '#e2e8f0',
-    borderBottom: '2px solid #2563eb',
-  },
-  formRow: { display: 'flex', gap: '10px', marginBottom: '28px' },
-  input: {
-    background: '#1e293b',
-    border: '1px solid #334155',
-    color: '#e2e8f0',
-    padding: '8px 12px',
-    borderRadius: '6px',
-    fontSize: '14px',
-  },
-  button: {
-    background: '#2563eb',
-    color: 'white',
-    border: 'none',
-    padding: '8px 16px',
-    borderRadius: '6px',
-    fontSize: '14px',
-    cursor: 'pointer',
-  },
-  columns: { display: 'flex', gap: '24px' },
-  column: { flex: 1, minWidth: 0 },
-  colTitle: { fontSize: '15px', marginBottom: '10px', color: '#cbd5e1' },
-  list: { display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '70vh', overflowY: 'auto' },
-  empty: { color: '#64748b', fontSize: '13px' },
-  card: {
-    background: '#1e293b',
-    border: '1px solid #334155',
-    borderRadius: '8px',
-    padding: '10px 12px',
-  },
-  cardHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '6px',
-    fontSize: '14px',
-  },
-  cardBody: { fontSize: '12px', color: '#94a3b8', lineHeight: 1.6 },
-  badge: {
-    fontSize: '11px',
-    padding: '2px 8px',
-    borderRadius: '999px',
-    color: 'white',
-  },
-  pre: {
-    background: '#0f172a',
-    padding: '8px',
-    borderRadius: '6px',
-    fontSize: '11px',
-    overflowX: 'auto',
-    margin: 0,
-    marginBottom: '6px',
-  },
-  meta: { fontSize: '11px', color: '#64748b' },
-};
