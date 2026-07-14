@@ -478,6 +478,51 @@ pre.code-block {
   border-radius: 999px;
 }
 
+/* ---- Landing page ---- */
+
+.landing-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 28px;
+}
+
+.landing-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  color: var(--upv-maroon);
+}
+
+.landing-copy {
+  margin: 0;
+  color: var(--upv-muted);
+  line-height: 1.6;
+}
+
+.landing-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.landing-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: var(--upv-green);
+  color: #ffffff;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.landing-link:hover {
+  background: var(--upv-green-dark);
+}
+
 /* ---- Responsive ---- */
 
 @media (max-width: 720px) {

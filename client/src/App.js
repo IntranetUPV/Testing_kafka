@@ -178,6 +178,21 @@ export default function App() {
     ]),
   ]);
 
+  const landingView = h('div', { key: 'landing', className: 'card landing-card' }, [
+    h('h2', { key: 'welcome', className: 'landing-title' }, 'Welcome to the intranet'),
+    h('p', { key: 'intro', className: 'landing-copy' }, 'Use this portal to jump to the local services available in this environment.'),
+    h('div', { key: 'block1'}, [
+      h('h3', { key: 'title1' }, 'Course Registration:'),
+      h('p', { key: 'description1' }, 'Register and enroll in courses for the First Semester, 2026-2027 academic year!'),
+      h('a', { key: 'link1', className: 'landing-link', href: 'http://localhost:45174', target: '_blank', rel: 'noopener noreferrer' }, 'View Registration Page'),
+    ]),
+    h('div', { key: 'block2' }, [
+      h('h3', { key: 'title2' }, 'TLRC:'),
+      h('p', { key: 'description2' }, 'Access the TLRC resources and services.'),
+      h('a', { key: 'link2', className: 'landing-link', href: 'http://localhost:45175', target: '_blank', rel: 'noopener noreferrer' }, 'View TRLC Page'),
+    ])
+  ]);
+
   return h('div', { className: 'container' }, [
     h('div', { key: 'header' }, [
       h('header', { key: 'headerinner' }, [
@@ -198,6 +213,15 @@ export default function App() {
         'button',
         {
           key: 'tab1',
+          onClick: () => setTab('landing'),
+          className: 'tab-button' + (tab === 'landing' ? ' tab-button-active' : ''),
+        },
+        'Landing page'
+      ),
+      h(
+        'button',
+        {
+          key: 'tab2',
           onClick: () => setTab('dashboard'),
           className: 'tab-button' + (tab === 'dashboard' ? ' tab-button-active' : ''),
         },
@@ -206,7 +230,7 @@ export default function App() {
       h(
         'button',
         {
-          key: 'tab2',
+          key: 'tab3',
           onClick: () => setTab('pipeline'),
           className: 'tab-button' + (tab === 'pipeline' ? ' tab-button-active' : ''),
         },
@@ -214,6 +238,7 @@ export default function App() {
       ),
     ]),
 
+    tab === 'landing' ? landingView : null,
     tab === 'dashboard' ? h(Dashboard, { key: 'dash', events: parsedEvents }) : null,
     tab === 'pipeline' ? pipelineView : null,
   ]);
